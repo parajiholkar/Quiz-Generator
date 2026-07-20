@@ -59,7 +59,7 @@ function CodeLog({ entries }) {
 }
 
 export default function App() {
-  const [apiKey, setApiKey] = useState('')
+  // const [apiKey, setApiKey] = useState('')
   const [model, setModel] = useState('gemini-3.5-flash')
   const [prompt, setPrompt] = useState('')
   const [numQuestions, setNumQuestions] = useState(5)
@@ -79,6 +79,10 @@ export default function App() {
     setDownloadedName('')
     setLoading(true)
     try {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) {
+        throw new Error('Gemini API key is not set. Please set VITE_GEMINI_API_KEY in your environment.')
+      }
       const res = await generateQuizFile({ apiKey, model, prompt, numQuestions, quizType, timeLimit })
       const sheets = parseWorkbookForPreview(res.fileBase64)
       setResult({ ...res, sheets })
@@ -113,7 +117,7 @@ export default function App() {
       </header>
 
       <form className="panel" onSubmit={handleGenerate}>
-        <div className="field">
+        {/* <div className="field">
           <label htmlFor="apiKey">Gemini API key</label>
           <input
             id="apiKey"
@@ -123,7 +127,7 @@ export default function App() {
             onChange={(e) => setApiKey(e.target.value)}
             required
           />
-        </div>
+        </div> */}
 
         <div className="field">
           <label htmlFor="prompt">What quiz do you want?</label>
