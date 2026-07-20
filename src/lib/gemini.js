@@ -89,9 +89,13 @@ Defaults if not otherwise specified above: ${numQuestions} questions, quiz type 
  * @param {number} opts.timeLimit
  * @returns {Promise<{fileBase64: string, fileMimeType: string, preview: Object, codeLog: Array}>}
  */
-export async function generateQuizFile({ apiKey, model, prompt, numQuestions, quizType, timeLimit }) {
-  if (!apiKey) throw new Error('Missing Gemini API key.')
+export async function generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit }) {
   if (!prompt) throw new Error('Please describe the quiz you want.')
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    throw new Error('Gemini API key is not set. Please set Gemini\'s API key in your environment. OR try after some time, as the key may be temporarily unavailable.')
+  }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 

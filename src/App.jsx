@@ -79,11 +79,7 @@ export default function App() {
     setDownloadedName('')
     setLoading(true)
     try {
-      const apiKey = process.env.GEMINI_API_KEY
-      // if (!apiKey) {
-      //   throw new Error('Gemini API key is not set. Please set Gemini\'s API key in your environment.')
-      // }
-      const res = await generateQuizFile({ apiKey, model, prompt, numQuestions, quizType, timeLimit })
+      const res = await generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit })
       const sheets = parseWorkbookForPreview(res.fileBase64)
       setResult({ ...res, sheets })
       const firstSheet = SHEET_ORDER.find((s) => sheets[s]) || Object.keys(sheets)[0]
