@@ -92,7 +92,7 @@ Defaults if not otherwise specified above: ${numQuestions} questions, quiz type 
 export async function generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit }) {
   if (!prompt) throw new Error('Please describe the quiz you want.')
 
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
   if (!apiKey) {
     throw new Error('Gemini API key is not set. Please set Gemini\'s API key in your environment. OR try after some time, as the key may be temporarily unavailable.')
   }
