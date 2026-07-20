@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { generateQuizFile } from './lib/gemini'
+import { categories } from './lib/category'
 import { parseWorkbookForPreview, downloadWorkbook } from './lib/workbookPreview'
 
 const SHEET_ORDER = ['Quiz', 'Questions', 'Options', 'Quiz_Questions']
@@ -64,6 +65,7 @@ export default function App() {
   const [prompt, setPrompt] = useState('')
   const [numQuestions, setNumQuestions] = useState(5)
   const [quizType, setQuizType] = useState('topic')
+  const [categoryIndex, setCategoryIndex] = useState('');
   const [timeLimit, setTimeLimit] = useState(10)
 
   const [loading, setLoading] = useState(false)
@@ -79,7 +81,18 @@ export default function App() {
     setDownloadedName('')
     setLoading(true)
     try {
-      const res = await generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit })
+      const parsed = parseInt(categoryIndex, 10);
+      const catIndex = Number.isNaN(parsed) ? null : parsed;
+      const catName = categories[catIndex] ?? null;
+      const res = await generateQuizFile({
+        model: model,
+        prompt: prompt,
+        numQuestions: numQuestions,
+        quizType: quizType,
+        timeLimit: timeLimit,
+        categoryName: catName,
+        categoryId: catIndex
+      })
       const sheets = parseWorkbookForPreview(res.fileBase64)
       setResult({ ...res, sheets })
       const firstSheet = SHEET_ORDER.find((s) => sheets[s]) || Object.keys(sheets)[0]
@@ -170,6 +183,15 @@ export default function App() {
           <div className="field">
             <label htmlFor="model">Gemini model</label>
             <input id="model" type="text" value={model} onChange={(e) => setModel(e.target.value)} />
+          </div>
+          <div className="field field--narrow">
+            <label htmlFor="category">Category</label>
+            <select id="category" value={categoryIndex} onChange={(e) => setCategoryIndex(e.target.value)}>
+              <option value="" >Select category</option>
+              {categories.map((cat, index) => (
+                <option key={index} value={index}>{cat}</option>
+              ))}
+            </select>
           </div>
         </div>
         <p className="hint">

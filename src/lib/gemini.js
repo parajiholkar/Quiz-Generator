@@ -11,7 +11,7 @@ For every request you must:
    difficulty. Write a short 1-2 sentence explanation for each correct answer.
 
 2. Use the code execution tool to build an .xlsx workbook with openpyxl that
-   matches this EXACT structure — four sheets, these exact sheet names, this
+   matches this EXACT structure four sheets, these exact sheet names, this
    exact column order, headers written verbatim on row 1 of each sheet:
 
    Sheet "Quiz" (one data row):
@@ -39,7 +39,7 @@ For every request you must:
 
    CRITICAL — avoiding correct-answer position bias:
    Language models have a well-known bias toward placing the correct answer in
-   the same slot (often "B") across many questions. You must actively counter
+   the same slot (ex. "B") across many questions. You must actively counter
    this using code, not judgment:
    - For each question, first decide the correct answer's text and the three
      distractor texts as an unordered Python list, keeping track of which
@@ -49,7 +49,7 @@ For every request you must:
      decide their order. Only after shuffling do you assign labels A, B, C, D
      to the shuffled positions and record whichever label the correct text
      landed on as correct_option.
-   - Never manually pick which letter is correct — the shuffle result is the
+   - Never manually pick which letter is correct the shuffle result is the
      only thing that determines correct_option.
    - Before saving, print a quick tally of how many times each of A/B/C/D is
      correct_option across all questions. If any single letter accounts for
@@ -67,13 +67,27 @@ For every request you must:
 
    This JSON must exactly reflect the rows written into the workbook.
 
-Never skip building the actual file — the JSON alone is not enough, the
+Never skip building the actual file the JSON alone is not enough, the
 workbook is the deliverable.`
 
-function buildUserPrompt({ prompt, numQuestions, quizType, timeLimit }) {
-  return `Request: ${prompt}
+function buildUserPrompt({ prompt, numQuestions, quizType, timeLimit, categoryName, categoryId }) {
+  // Use an array to store our lines so we don't end up with awkward blank spaces
+  const lines = [
+    `Request: ${prompt}`
+  ];
 
-Defaults if not otherwise specified above: ${numQuestions} questions, quiz type "${quizType}", time limit ${timeLimit} minutes.`
+  if (categoryId != null) {
+    lines.push(`categoryId: ${categoryId + 1}`);
+  }
+
+  if (categoryName != null) {
+    lines.push(`categoryName: ${categoryName}`);
+  }
+
+  lines.push(''); // Adds a single blank line before the footer
+  lines.push(`Defaults if not otherwise specified above: ${numQuestions} questions, quiz type "${quizType}", time limit ${timeLimit} minutes.`);
+
+  return lines.join('\n');
 }
 
 /**
@@ -81,15 +95,16 @@ Defaults if not otherwise specified above: ${numQuestions} questions, quiz type 
  * actual .xlsx workbook, returning the raw file bytes plus a JSON preview.
  *
  * @param {Object} opts
- * @param {string} opts.apiKey
  * @param {string} opts.model
  * @param {string} opts.prompt - free-form user request
  * @param {number} opts.numQuestions
  * @param {string} opts.quizType
  * @param {number} opts.timeLimit
+ * @param {string} opts.categoryName
+ * @param {number} opts.categoryId
  * @returns {Promise<{fileBase64: string, fileMimeType: string, preview: Object, codeLog: Array}>}
  */
-export async function generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit }) {
+export async function generateQuizFile({ model, prompt, numQuestions, quizType, timeLimit, categoryName, categoryId }) {
   if (!prompt) throw new Error('Please describe the quiz you want.')
 
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY
@@ -104,7 +119,16 @@ export async function generateQuizFile({ model, prompt, numQuestions, quizType, 
     contents: [
       {
         role: 'user',
-        parts: [{ text: buildUserPrompt({ prompt, numQuestions, quizType, timeLimit }) }],
+        parts: [{
+          text: buildUserPrompt({
+            prompt: prompt,
+            numQuestions: numQuestions,
+            quizType: quizType,
+            timeLimit: timeLimit,
+            categoryName: categoryName,
+            categoryId: categoryId
+          })
+        }],
       },
     ],
     tools: [{ codeExecution: {} }],
@@ -177,7 +201,7 @@ export async function generateQuizFile({ model, prompt, numQuestions, quizType, 
     const cleaned = finalText.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '')
     preview = JSON.parse(cleaned)
   } catch {
-    preview = null 
+    preview = null
   }
 
   return { fileBase64, fileMimeType, preview, codeLog }
